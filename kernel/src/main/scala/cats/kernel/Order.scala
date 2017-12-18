@@ -112,7 +112,6 @@ trait OrderToOrderingConversion {
    */
   implicit def catsKernelOrderingForOrder[A](implicit ev: Order[A]): Ordering[A] =
     ev.toOrdering
-
 }
 
 object Order extends OrderFunctions[Order] with OrderToOrderingConversion {

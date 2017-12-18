@@ -99,6 +99,12 @@ trait PartialOrder[@sp A] extends Any with Eq[A] { self =>
    * Returns true if `x` > `y`, false otherwise.
    */
   def gt(x: A, y: A): Boolean = partialCompare(x, y) > 0
+
+  /** Returns a `scala.math.PartialOrdering` instance. */
+  def toPartialOrdering: PartialOrdering[A] = new PartialOrdering[A] {
+    def tryCompare(x: A, y: A): Option[Int] = tryCompare(x, y)
+    def lteq(x: A, y: A): Boolean = lteqv(x, y)
+  }
 }
 
 abstract class PartialOrderFunctions[P[T] <: PartialOrder[T]] extends EqFunctions[P] {
@@ -162,9 +168,10 @@ object PartialOrder extends PartialOrderFunctions[PartialOrder] with PartialOrde
 
 
 trait PartialOrderToPartialOrderingConversion {
+  /**
+    * Implicitly derive a `scala.math.PartialOrdering[A]` from a `PartialOrder[A]`
+    * instance.
+    */
   implicit def catsKernelPartialOrderingForPartialOrder[A](implicit ev: PartialOrder[A]): PartialOrdering[A] =
-    new PartialOrdering[A] {
-      def tryCompare(x: A, y: A): Option[Int] = ev.tryCompare(x, y)
-      def lteq(x: A, y: A): Boolean = ev.lteqv(x, y)
-    }
+    ev.toPartialOrdering
 }

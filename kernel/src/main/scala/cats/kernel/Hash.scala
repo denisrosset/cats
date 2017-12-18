@@ -16,8 +16,10 @@ trait Hash[@sp A] extends Any with Eq[A] with Serializable { self =>
    */
   def hash(x: A): Int
 
-  // `Hash#toHashing` deliberately not implemented since `scala.util.hashing.Hashing` is only
-  // compatible with universal equality.
+  /** Returns a `scala.util.hashing.Hashing` instance. */
+  def toHashing: Hashing[A] = new Hashing[A] {
+    override def hash(x: A): Int = self.hash(x)
+  }
 }
 
 abstract class HashFunctions[H[T] <: Hash[T]] extends EqFunctions[H] {
@@ -27,7 +29,7 @@ abstract class HashFunctions[H[T] <: Hash[T]] extends EqFunctions[H] {
 }
 
 
-object Hash extends HashFunctions[Hash] {
+object Hash extends HashFunctions[Hash] extends HashToHashingConversion {
 
   /** Fetch a `Hash` instance given the specific type. */
   @inline final def apply[A](implicit ev: Hash[A]): Hash[A] = ev
@@ -56,7 +58,10 @@ object Hash extends HashFunctions[Hash] {
 }
 
 trait HashToHashingConversion {
-  implicit def catsKernelHashToHashing[A](implicit ev: Hash[A]): Hashing[A] = new Hashing[A] {
-    override def hash(x: A): Int = ev.hash(x)
-  }
+  /**
+    * Implicitly derive a `scala.util.hashing.Hashing[A]` from a `Hash[A]`
+    * instance.
+    */
+  implicit def catsKernelHashToHashing[A](implicit ev: Hash[A]): Hashing[A] =
+    ev.toHashing
 }
